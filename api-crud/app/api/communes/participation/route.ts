@@ -5,7 +5,7 @@ import { verifyToken, getTokenFromHeader } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     // Vérifier l'authentification (optionnel pour compatibilité web)
-    const token = getTokenFromHeader(request.headers.get('authorization'));
+    const token = getTokenFromHeader(request.headers.get('authorization') || undefined);
     if (token) {
       try {
         verifyToken(token);
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       nombreBureaux,
       nombreInscrits,
       nombreVotants,
-      tauxParticipation,
+      tauxParticipation,   
       bulletinsNuls,
       suffragesValables,
       tauxAbstention,
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Optionnel: Vérifier l'authentification
-    const token = getTokenFromHeader(request.headers.get('authorization'));
+    const token = getTokenFromHeader(request.headers.get('authorization') || undefined);
     if (token) {
       try {
         verifyToken(token);

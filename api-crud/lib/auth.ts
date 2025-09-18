@@ -17,11 +17,11 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
-}
+// export function generateToken(payload: TokenPayload): string {
+//   return jwt.sign(payload as object, JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+//   });
+// }
 
 export function verifyToken(token: string): TokenPayload {
   return jwt.verify(token, JWT_SECRET) as TokenPayload;

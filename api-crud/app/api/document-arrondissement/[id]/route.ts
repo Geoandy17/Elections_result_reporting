@@ -130,7 +130,7 @@ export async function PUT(
       return response
     }
 
-    let updateData: any = {
+    const updateData: { libelle: string; timestamp: Date; url_pv?: string; hash_file?: string } = {
       libelle,
       timestamp: new Date()
     }

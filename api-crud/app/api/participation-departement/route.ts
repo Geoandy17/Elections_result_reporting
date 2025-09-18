@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const departementCode = searchParams.get('departement')
     const regionCode = searchParams.get('region')
     
-    let where: any = {}
+    const where: Record<string, unknown> = {}
     
     if (departementCode) {
       where.code_departement = parseInt(departementCode)
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     // Vérifier si une participation existe déjà pour ce département
     const existingParticipation = await prisma.participationDepartement.findUnique({
-      where: { code_departement: parseInt(code_departement) }
+      where: { codeDepartement: parseInt(code_departement) }
     })
 
     if (existingParticipation) {
@@ -120,23 +120,22 @@ export async function POST(request: NextRequest) {
 
     const participation = await prisma.participationDepartement.create({
       data: {
-        code_departement: parseInt(code_departement),
-        nombre_bureau_vote: parseInt(nombre_bureau_vote) || 0,
-        nombre_inscrit: parseInt(nombre_inscrit) || 0,
-        nombre_enveloppe_urnes: parseInt(nombre_enveloppe_urnes) || 0,
-        nombre_enveloppe_bulletins_differents: parseInt(nombre_enveloppe_bulletins_differents) || 0,
-        nombre_bulletin_electeur_identifiable: parseInt(nombre_bulletin_electeur_identifiable) || 0,
-        nombre_bulletin_enveloppes_signes: parseInt(nombre_bulletin_enveloppes_signes) || 0,
-        nombre_enveloppe_non_elecam: parseInt(nombre_enveloppe_non_elecam) || 0,
-        nombre_bulletin_non_elecam: parseInt(nombre_bulletin_non_elecam) || 0,
-        nombre_bulletin_sans_enveloppe: parseInt(nombre_bulletin_sans_enveloppe) || 0,
-        nombre_enveloppe_vide: parseInt(nombre_enveloppe_vide) || 0,
-        nombre_suffrages_valable: parseInt(nombre_suffrages_valable) || 0,
-        nombre_votant: parseInt(nombre_votant) || 0,
-        bulletin_nul: parseInt(bulletin_nul) || 0,
-        suffrage_exprime: suffrage_exprime ? parseFloat(suffrage_exprime) : null,
-        taux_participation: taux_participation ? parseFloat(taux_participation) : null,
-        date_creation: new Date().toISOString()
+        codeDepartement: parseInt(code_departement),
+        nombreBureauVote: parseInt(nombre_bureau_vote) || 0,
+        nombreInscrit: parseInt(nombre_inscrit) || 0,
+        nombreEnveloppeUrnes: parseInt(nombre_enveloppe_urnes) || 0,
+        enveloppesContBulletinsDifferents: parseInt(nombre_enveloppe_bulletins_differents) || 0,
+        bulletinsAvecSignes: parseInt(nombre_bulletin_electeur_identifiable) || 0,
+        bulletinsDansEnveloppesAvecSignes: parseInt(nombre_bulletin_enveloppes_signes) || 0,
+        enveloppesAutresQueElecam: parseInt(nombre_enveloppe_non_elecam) || 0,
+        bulletinsAutresQueElecam: parseInt(nombre_bulletin_non_elecam) || 0,
+        bulletinsSansEnveloppes: parseInt(nombre_bulletin_sans_enveloppe) || 0,
+        enveloppesVides: parseInt(nombre_enveloppe_vide) || 0,
+        nombreVotant: parseInt(nombre_votant) || 0,
+        bulletinNul: parseInt(bulletin_nul) || 0,
+        suffrageExprime: parseInt(suffrage_exprime) || 0,
+        tauxParticipation: taux_participation ? parseFloat(taux_participation) : null,
+        dateCreation: new Date().toISOString()
       },
       include: {
         departement: {

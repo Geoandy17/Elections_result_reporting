@@ -63,7 +63,7 @@ export async function GET(
             candidat: {
               select: {
                 code: true,
-                noms_prenoms: true
+                nomsPrenoms: true
               }
             }
           }
@@ -149,7 +149,7 @@ export async function PUT(
             candidat: {
               select: {
                 code: true,
-                noms_prenoms: true
+                nomsPrenoms: true
               }
             }
           }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { verifyToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -7,12 +8,14 @@ export async function POST(request: NextRequest) {
     // Optionnel: Vérifier l'authentification
     const authHeader = request.headers.get('authorization');
     const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
-    let userId: string | undefined;
+    // Variable userId déclarée mais non utilisée - à supprimer ou utiliser
+    // let userId: string | undefined;
     
     if (token) {
       try {
-        const decoded = verifyToken(token);
-        userId = decoded.userId;
+        verifyToken(token);
+        // const decoded = verifyToken(token);
+        // userId = decoded.userId;
       } catch {
         // Token invalide mais on continue (accès public possible)
         console.warn('Token invalide lors de la soumission');
@@ -64,6 +67,11 @@ export async function POST(request: NextRequest) {
     const suffrageExprime = participation.suffrageExprime || 
       (participation.nombreVotant - (participation.bulletinNul || 0)) || 0;
 
+    // Calcul du taux de participation
+    const tauxParticipation = participation.nombreInscrit > 0 
+      ? parseFloat(((participation.nombreVotant / participation.nombreInscrit) * 100).toFixed(2))
+      : null;
+
     // Vérifier si le département n'a pas déjà été soumis
     const existingParticipation = await prisma.participationDepartement.findUnique({
       where: {
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Transaction pour créer la participation et les résultats
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
       // Créer la participation avec tous les champs
       const participationCreated = await tx.participationDepartement.create({
@@ -102,6 +110,8 @@ export async function POST(request: NextRequest) {
           bulletinsSansEnveloppes: participation.bulletinsSansEnveloppes || null,
           enveloppesVides: participation.enveloppesVides || null,
           
+          // Taux de participation calculé
+          tauxParticipation: tauxParticipation,
           
           dateCreation: new Date().toISOString(),
         },
@@ -109,7 +119,7 @@ export async function POST(request: NextRequest) {
 
       // Créer les résultats pour chaque candidat
       const resultatsCreated = await Promise.all(
-        resultats.map(async (resultat: any) => {
+        resultats.map(async (resultat: { codeParti?: number; codeCandidat?: number; codeDepartement: number; nombreVote?: number; pourcentage?: number }) => {
           // Récupérer le parti du candidat si non fourni
           let codeParti = resultat.codeParti;
           

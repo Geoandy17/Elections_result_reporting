@@ -53,6 +53,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken, getTokenFromHeader } from '@/lib/auth';
 
+interface ExtendedTokenPayload {
+  userId?: string;
+  email?: string;
+  role?: string;
+  code?: number | string;
+  userCode?: number | string;
+  username?: string;
+  user?: { username?: string };
+}
+
+type DepartmentWithRelations = {
+  code: number;
+  libelle: string | null;
+  code_region: number | null;
+  region: unknown;
+  arrondissements: unknown;
+  participationDepartements: unknown[];
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Vérifier l'authentification et récupérer l'utilisateur
@@ -64,11 +83,11 @@ export async function GET(request: NextRequest) {
     
     if (token) {
       try {
-        const decoded = verifyToken(token) as any;
+        const decoded = verifyToken(token) as ExtendedTokenPayload;
         // Le token contient le code utilisateur (depuis l'autre backend d'auth)
         // Le code peut être dans différents endroits selon la structure du token
         const codeFromToken = decoded.code || decoded.userCode || decoded.userId;
-        userUsername = decoded.username || decoded.user?.username;
+        userUsername = decoded.username || decoded.user?.username || null;
         
         // Récupérer l'utilisateur depuis la BD partagée
         // On peut chercher par code ou username
@@ -77,7 +96,7 @@ export async function GET(request: NextRequest) {
         if (codeFromToken) {
           // Priorité au code si disponible
           utilisateur = await prisma.utilisateur.findUnique({
-            where: { code: parseInt(codeFromToken) },
+            where: { code: typeof codeFromToken === 'string' ? parseInt(codeFromToken) : codeFromToken },
             include: { role: true }
           });
         } else if (userUsername) {
@@ -106,43 +125,43 @@ export async function GET(request: NextRequest) {
     // TODO: Implémenter la recherche par géolocalisation
 
     // Construire le filtre WHERE selon le rôle
-    let whereClause: any = {};
+    const whereClause: Record<string, unknown> = {};
     
     // Appliquer les restrictions selon le rôle
     if (userRole && userCode) {
       if (userRole === 'Administrateur') {
         // Admin voit tout, pas de restriction
-      } else if (userRole === 'Scrutateur') {
+      } else if (userRole === 'Scrutateur Departement') {
         // Scrutateur voit uniquement ses départements assignés ou ceux de sa région
         let allowedDeptCodes: number[] = [];
         
         // 1. Récupérer les départements directement assignés
         const directDepts = await prisma.utilisateurDepartement.findMany({
-          where: { codeUtilisateur: userCode },
-          select: { codeDepartement: true }
+          where: { code_utilisateur: userCode },
+          select: { code_departement: true }
         });
         
         const directCodes = directDepts
-          .filter(d => d.codeDepartement !== null)
-          .map(d => d.codeDepartement!);
+          .filter((d: { code_departement: number | null }) => d.code_departement !== null)
+          .map((d: { code_departement: number | null }) => d.code_departement!);
         
         // 2. Récupérer les départements via les régions assignées
         const userRegions = await prisma.utilisateurRegion.findMany({
-          where: { codeUtilisateur: userCode },
-          select: { codeRegion: true }
+          where: { code_utilisateur: userCode },
+          select: { code_region: true }
         });
         
         if (userRegions.length > 0) {
           const regionCodes = userRegions
-            .filter(r => r.codeRegion !== null)
-            .map(r => r.codeRegion!);
+            .filter((r: { code_region: number | null }) => r.code_region !== null)
+            .map((r: { code_region: number | null }) => r.code_region!);
           
           const regionDepts = await prisma.departement.findMany({
-            where: { codeRegion: { in: regionCodes } },
+            where: { code_region: { in: regionCodes } },
             select: { code: true }
           });
           
-          const regionDeptCodes = regionDepts.map(d => d.code);
+          const regionDeptCodes = regionDepts.map((d: { code: number }) => d.code);
           allowedDeptCodes = [...new Set([...directCodes, ...regionDeptCodes])];
         } else {
           allowedDeptCodes = directCodes;
@@ -169,7 +188,7 @@ export async function GET(request: NextRequest) {
     
     // Ajouter le filtre par région si spécifié
     if (codeRegion) {
-      whereClause.codeRegion = parseInt(codeRegion);
+      whereClause.code_region = parseInt(codeRegion);
     }
 
     // Récupérer les départements avec le filtre construit
@@ -182,23 +201,23 @@ export async function GET(request: NextRequest) {
             code: true,
             libelle: true,
             _count: {
-              select: { bureauxVote: true }
+              select: { bureauVotes: true }
             }
           }
         },
-        participations: true // Inclure les participations pour vérifier le statut
+        participationDepartements: true // Inclure les participations pour vérifier le statut
       },
       orderBy: [
-        { codeRegion: 'asc' },
+        { code_region: 'asc' },
         { libelle: 'asc' }
       ]
     });
 
     // Ajouter le statut isLocked à chaque département
-    const departementsWithStatus = departements.map(dept => ({
+    const departementsWithStatus = departements.map((dept: DepartmentWithRelations) => ({
       ...dept,
-      isLocked: dept.participations && dept.participations.length > 0,
-      hasResults: dept.participations && dept.participations.length > 0
+      isLocked: dept.participationDepartements && dept.participationDepartements.length > 0,
+      hasResults: dept.participationDepartements && dept.participationDepartements.length > 0
     }));
 
     return NextResponse.json({

@@ -374,12 +374,11 @@ async function main() {
         nombre_enveloppe_non_elecam: 450,
         nombre_bulletin_non_elecam: 320,
         nombre_bulletin_sans_enveloppe: 180,
-        nombre_enveloppe_vide: 220,
-        nombre_suffrages_valable: 279500,
-        nombre_votant: 285000,
-        bulletin_nul: 5500,
-        suffrage_exprime: 279500,
-        taux_participation: 63.33,
+        enveloppesVides: 220,
+        nombreVotant: 285000,
+        bulletinNul: 5500,
+        suffrageExprime: 279500,
+        tauxParticipation: 63.33,
         date_creation: new Date().toISOString()
       }
     }),
@@ -395,12 +394,11 @@ async function main() {
         nombre_enveloppe_non_elecam: 380,
         nombre_bulletin_non_elecam: 290,
         nombre_bulletin_sans_enveloppe: 150,
-        nombre_enveloppe_vide: 190,
-        nombre_suffrages_valable: 241200,
-        nombre_votant: 245000,
-        bulletin_nul: 3800,
-        suffrage_exprime: 241200,
-        taux_participation: 64.47,
+        enveloppesVides: 190,
+        nombreVotant: 245000,
+        bulletinNul: 3800,
+        suffrageExprime: 241200,
+        tauxParticipation: 64.47,
         date_creation: new Date().toISOString()
       }
     })
@@ -419,8 +417,8 @@ async function main() {
       prisma.resultatDepartement.create({
         data: {
           code_departement: departments[0].code,
-          code_parti: parties[i].code,
-          nombre_vote: votes,
+          codeParti: parties[i].code,
+          nombreVote: votes,
           pourcentage: percentage,
           date_creation: new Date().toISOString()
         }
@@ -437,8 +435,8 @@ async function main() {
       prisma.resultatDepartement.create({
         data: {
           code_departement: departments[1].code,
-          code_parti: parties[i].code,
-          nombre_vote: votes,
+          codeParti: parties[i].code,
+          nombreVote: votes,
           pourcentage: percentage,
           date_creation: new Date().toISOString()
         }

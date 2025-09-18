@@ -25,6 +25,9 @@ model Arrondissement {
   bureauVotes       BureauVote[]
   pvArrondissements PvArrondissement[]
   utilisateurArrondissements UtilisateurArrondissement[]
+  participationArrondissements ParticipationArrondissement[]
+
+  @@map("arrondissement")
 }
 
 model BureauVote {
@@ -46,21 +49,21 @@ model BureauVote {
   redressementBureauVotes RedressementBureauVote[]
   redressementCandidats RedressementCandidat[]
   utilisateurBureauVotes UtilisateurBureauVote[]
+
+  @@map("bureau_vote")
 }
 
-
 model Candidat {
-  code           Int      @id @default(autoincrement())
-  nomsPrenoms    String?  @map("noms_prenoms")
-  photo          String?
-  dateCreation   String?  @map("date_creation")
-  dateModification String? @map("date_modification")
-  codeCreateur   String?  @map("code_createur")
-  codeModificateur String? @map("code_modificateur")
-  
-  partisPolitiques PartiPolitique[]
-  resultatsDepartement ResultatDepartement[]
-  
+  code              Int                   @id @default(autoincrement())
+  noms_prenoms      String?
+  photo             String?
+  date_creation     String?
+  date_modification String?
+  code_createur     String?
+  code_modificateur String?
+  partiPolitiques   PartiPolitique[]
+  resultatDepartements ResultatDepartement[]
+
   @@map("candidat")
 }
 
@@ -73,6 +76,8 @@ model CommissionDepartementale {
   date_modification DateTime              @default(now())
   departement       Departement           @relation(fields: [code_departement], references: [code])
   membreCommissions MembreCommission[]
+
+  @@map("commission_departementale")
 }
 
 model Departement {
@@ -92,6 +97,9 @@ model Departement {
   participationDepartements ParticipationDepartement[]
   resultatDepartements ResultatDepartement[]
   utilisateurDepartements UtilisateurDepartement[]
+  pvDepartements PvDepartement[]
+
+  @@map("departement")
 }
 
 model FonctionCommission {
@@ -100,6 +108,8 @@ model FonctionCommission {
   description       String?
   date_ajout        DateTime              @default(now())
   membreCommissions MembreCommission[]
+
+  @@map("fonction_commission")
 }
 
 model Journal {
@@ -112,6 +122,8 @@ model Journal {
   code_modificateur String?
   date_creation     String?
   date_modification String?
+
+  @@map("journal")
 }
 
 model MembreCommission {
@@ -125,6 +137,8 @@ model MembreCommission {
   code_commission   Int?
   fonction          FonctionCommission    @relation(fields: [code_fonction], references: [code])
   commission        CommissionDepartementale? @relation(fields: [code_commission], references: [code])
+
+  @@map("membre_commission")
 }
 
 model PartiPolitique {
@@ -142,39 +156,58 @@ model PartiPolitique {
   candidat          Candidat?             @relation(fields: [code_candidat], references: [code])
   redressementCandidats RedressementCandidat[]
   resultatDepartements ResultatDepartement[]
-  resultats      ResultatDepartement[]
+
+  @@map("parti_politique")
 }
 
 model ParticipationDepartement {
-  code           Int      @id @default(autoincrement())
-  codeDepartement Int     @map("code_departement")
-  
-  // Champs principaux obligatoires
-  nombreBureauVote Int?   @default(0) @map("nombre_bureau_vote")
-  nombreInscrit  Int?     @default(0) @map("nombre_inscrit")
-  nombreVotant   Int?     @default(0) @map("nombre_votant")
-  nombreEnveloppeUrnes Int? @default(0) @map("nombre_enveloppe_urnes")
-  bulletinNul    Int?     @default(0) @map("bulletin_nul")
-  suffrageExprime Int?    @default(0) @map("suffrage_exprime")
-  
-  // Champs détaillés optionnels
-  enveloppesContBulletinsDifferents Int? @default(0) @map("enveloppes_bulletins_differents")
-  bulletinsAvecSignes Int? @default(0) @map("bulletins_avec_signes")
-  bulletinsDansEnveloppesAvecSignes Int? @default(0) @map("bulletins_enveloppes_signes")
-  enveloppesAutresQueElecam Int? @default(0) @map("enveloppes_autres_elecam")
-  bulletinsAutresQueElecam Int? @default(0) @map("bulletins_autres_elecam")
-  bulletinsSansEnveloppes Int? @default(0) @map("bulletins_sans_enveloppes")
-  enveloppesVides Int? @default(0) @map("enveloppes_vides")
-  
-  
-  // Métadonnées
-  dateCreation   String?  @map("date_creation")
-  dateModification String? @map("date_modification")
-  
-  departement    Departement @relation(fields: [codeDepartement], references: [code])
-  
-  @@unique([codeDepartement])
-  @@map("Participation_departement")
+  code                            Int                   @id @default(autoincrement())
+  code_departement                Int                   @unique
+  nombre_bureau_vote              Int                   @default(0)
+  nombre_inscrit                  Int                   @default(0)
+  nombre_enveloppe_urnes          Int                   @default(0)
+  nombre_enveloppe_bulletins_differents Int             @default(0)
+  nombre_bulletin_electeur_identifiable Int             @default(0)
+  nombre_bulletin_enveloppes_signes Int                 @default(0)
+  nombre_enveloppe_non_elecam     Int                   @default(0)
+  nombre_bulletin_non_elecam      Int                   @default(0)
+  nombre_bulletin_sans_enveloppe  Int                   @default(0)
+  nombre_enveloppe_vide           Int                   @default(0)
+  nombre_suffrages_valable        Int                   @default(0)
+  nombre_votant                   Int                   @default(0)
+  bulletin_nul                    Int                   @default(0)
+  suffrage_exprime                Float?
+  taux_participation              Float?
+  taux_abstention                 Float?
+  date_creation                   String?
+  departement                     Departement           @relation(fields: [code_departement], references: [code])
+
+  @@map("participation_departement")
+}
+
+model ParticipationArrondissement {
+  code                            Int                   @id @default(autoincrement())
+  code_arrondissement             Int                   @unique
+  nombre_bureau_vote              Int                   @default(0)
+  nombre_inscrit                  Int                   @default(0)
+  nombre_enveloppe_urnes          Int                   @default(0)
+  nombre_enveloppe_bulletins_differents Int             @default(0)
+  nombre_bulletin_electeur_identifiable Int             @default(0)
+  nombre_bulletin_enveloppes_signes Int                 @default(0)
+  nombre_enveloppe_non_elecam     Int                   @default(0)
+  nombre_bulletin_non_elecam      Int                   @default(0)
+  nombre_bulletin_sans_enveloppe  Int                   @default(0)
+  nombre_enveloppe_vide           Int                   @default(0)
+  nombre_suffrages_valable        Int                   @default(0)
+  nombre_votant                   Int                   @default(0)
+  bulletin_nul                    Int                   @default(0)
+  suffrage_exprime                Float?
+  taux_participation              Float?
+  taux_abstention                 Float?
+  date_creation                   String?
+  arrondissement                  Arrondissement        @relation(fields: [code_arrondissement], references: [code])
+
+  @@map("participation_arrondissement")
 }
 
 model Permission {
@@ -186,6 +219,8 @@ model Permission {
   date_modification String?
   date_creation     String?
   rolePermissions   RolePermission[]
+
+  @@map("permission")
 }
 
 model PvArrondissement {
@@ -196,6 +231,20 @@ model PvArrondissement {
   libelle           String?
   timestamp         DateTime              @default(now())
   arrondissement    Arrondissement        @relation(fields: [code_arrondissement], references: [code])
+
+  @@map("pv_arrondissement")
+}
+
+model PvDepartement {
+  code              Int                   @id @default(autoincrement())
+  code_departement  Int
+  url_pv            String?
+  hash_file         String?
+  libelle           String?
+  timestamp         DateTime              @default(now())
+  departement       Departement           @relation(fields: [code_departement], references: [code])
+
+  @@map("pv_departement")
 }
 
 model RedressementBureauVote {
@@ -216,6 +265,8 @@ model RedressementBureauVote {
   raison_redressement             String?
   date_redressement               DateTime              @default(now())
   bureauVote                      BureauVote?           @relation(fields: [code_bureau_vote], references: [code])
+
+  @@map("redressement_bureau_vote")
 }
 
 model RedressementCandidat {
@@ -228,6 +279,8 @@ model RedressementCandidat {
   date_redressement DateTime              @default(now())
   bureauVote        BureauVote?           @relation(fields: [code_bureau_vote], references: [code])
   parti             PartiPolitique?       @relation(fields: [code_parti], references: [code])
+
+  @@map("redressement_candidat")
 }
 
 model Region {
@@ -243,23 +296,22 @@ model Region {
   arrondissements   Arrondissement[]
   departements      Departement[]
   utilisateurRegions UtilisateurRegion[]
+
+  @@map("region")
 }
 
 model ResultatDepartement {
-  code           Int      @id @default(autoincrement())
-  codeDepartement Int     @map("code_departement")
-  codeParti      Int      @map("code_parti")
-  codeCandidat   Int?     @map("code_candidat")
-  nombreVote     Int?     @default(0) @map("nombre_vote")
-  pourcentage    Decimal? @db.Decimal(19, 4)
-  dateCreation   String?  @map("date_creation")
-  
-  departement    Departement @relation(fields: [codeDepartement], references: [code])
-  parti          PartiPolitique @relation(fields: [codeParti], references: [code])
-  candidat       Candidat? @relation(fields: [codeCandidat], references: [code])
-  
-  @@unique([codeDepartement, codeParti])
-  @@map("Resultat_departement")
+  code              Int                   @id @default(autoincrement())
+  code_departement  Int
+  code_parti        Int
+  code_candidat     Int?
+  nombre_vote       Int                   @default(0)
+  pourcentage       Float?
+  date_creation     String?
+  departement       Departement           @relation(fields: [code_departement], references: [code])
+  parti             PartiPolitique        @relation(fields: [code_parti], references: [code])
+  candidat          Candidat?              @relation(fields: [code_candidat], references: [code])
+  @@map("resultat_departement")
 }
 
 model Role {
@@ -267,6 +319,8 @@ model Role {
   libelle           String?
   rolePermissions   RolePermission[]
   utilisateurs      Utilisateur[]
+
+  @@map("role")
 }
 
 model RolePermission {
@@ -275,6 +329,8 @@ model RolePermission {
   code_role         Int?
   permission        Permission?           @relation(fields: [code_permission], references: [code])
   role              Role?                 @relation(fields: [code_role], references: [code])
+
+  @@map("role_permission")
 }
 
 model Utilisateur {
@@ -300,6 +356,8 @@ model Utilisateur {
   utilisateurBureauVotes UtilisateurBureauVote[]
   utilisateurDepartements UtilisateurDepartement[]
   utilisateurRegions UtilisateurRegion[]
+
+  @@map("utilisateur")
 }
 
 model UtilisateurAffectationTerritoriale {
@@ -314,6 +372,8 @@ model UtilisateurAffectationTerritoriale {
   notes             String?
   utilisateur       Utilisateur           @relation(fields: [code_utilisateur], references: [code])
   affectePar        Utilisateur?          @relation("affecte_par", fields: [affecte_par], references: [code])
+
+  @@map("utilisateur_affectation_territoriale")
 }
 
 model UtilisateurArrondissement {
@@ -322,6 +382,8 @@ model UtilisateurArrondissement {
   code_utilisateur  Int?
   arrondissement    Arrondissement?       @relation(fields: [code_arrondissement], references: [code])
   utilisateur       Utilisateur?          @relation(fields: [code_utilisateur], references: [code])
+
+  @@map("utilisateur_arrondissement")
 }
 
 model UtilisateurBureauVote {
@@ -330,6 +392,8 @@ model UtilisateurBureauVote {
   code_utilisateur  Int?
   bureauVote        BureauVote?           @relation(fields: [code_bureau_vote], references: [code])
   utilisateur       Utilisateur?          @relation(fields: [code_utilisateur], references: [code])
+
+  @@map("utilisateur_bureau_vote")
 }
 
 model UtilisateurDepartement {
@@ -338,6 +402,8 @@ model UtilisateurDepartement {
   code_utilisateur  Int?
   departement       Departement?          @relation(fields: [code_departement], references: [code])
   utilisateur       Utilisateur?          @relation(fields: [code_utilisateur], references: [code])
+
+  @@map("utilisateur_departement")
 }
 
 model UtilisateurRegion {
@@ -346,23 +412,7 @@ model UtilisateurRegion {
   code_utilisateur  Int?
   region            Region?               @relation(fields: [code_region], references: [code])
   utilisateur       Utilisateur?          @relation(fields: [code_utilisateur], references: [code])
+
+  @@map("utilisateur_region")
 }
 
-
-model ParticipationCommune {
-  code           Int      @id @default(autoincrement())
-  codeCommune    Int      @map("code_commune")
-  nombreBureaux  Int?     @map("nombre_bureaux")
-  nombreInscrits Int?     @map("nombre_inscrits")
-  nombreVotants  Int?     @map("nombre_votants")
-  tauxParticipation Decimal? @map("taux_participation") @db.Decimal(5, 2)
-  bulletinsNuls  Int?     @map("bulletins_nuls")
-  suffragesValables Int?  @map("suffrages_valables")
-  tauxAbstention Decimal? @map("taux_abstention") @db.Decimal(5, 2)
-  dateCreation   DateTime @default(now()) @map("date_creation")
-  dateModification DateTime @updatedAt @map("date_modification")
-  
-  commune        Arrondissement @relation(fields: [codeCommune], references: [code])
-  
-  @@map("participation_commune")
-}
