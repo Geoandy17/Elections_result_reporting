@@ -48,3 +48,31 @@ export async function GET() {
     return response
   }
 }
+
+
+// export async function GET(request: NextRequest) {
+//   try {
+//     const regions = await prisma.region.findMany({
+//       include: {
+//         _count: {
+//           select: { 
+//             departements: true 
+//           }
+//         }
+//       }
+//     });
+
+//     return NextResponse.json({
+//       success: true,
+//       count: regions.length,
+//       data: regions
+//     });
+
+//   } catch (error) {
+//     console.error('Erreur récupération régions:', error);
+//     return NextResponse.json(
+//       { error: 'Erreur lors de la récupération des régions' },
+//       { status: 500 }
+//     );
+//   }
+// }

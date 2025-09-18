@@ -48,15 +48,20 @@ model BureauVote {
   utilisateurBureauVotes UtilisateurBureauVote[]
 }
 
+
 model Candidat {
-  code              Int                   @id @default(autoincrement())
-  noms_prenoms      String?
-  photo             String?
-  date_creation     String?
-  date_modification String?
-  code_createur     String?
-  code_modificateur String?
-  partiPolitiques   PartiPolitique[]
+  code           Int      @id @default(autoincrement())
+  nomsPrenoms    String?  @map("noms_prenoms")
+  photo          String?
+  dateCreation   String?  @map("date_creation")
+  dateModification String? @map("date_modification")
+  codeCreateur   String?  @map("code_createur")
+  codeModificateur String? @map("code_modificateur")
+  
+  partisPolitiques PartiPolitique[]
+  resultatsDepartement ResultatDepartement[]
+  
+  @@map("candidat")
 }
 
 model CommissionDepartementale {
@@ -137,28 +142,39 @@ model PartiPolitique {
   candidat          Candidat?             @relation(fields: [code_candidat], references: [code])
   redressementCandidats RedressementCandidat[]
   resultatDepartements ResultatDepartement[]
+  resultats      ResultatDepartement[]
 }
 
 model ParticipationDepartement {
-  code                            Int                   @id @default(autoincrement())
-  code_departement                Int                   @unique
-  nombre_bureau_vote              Int                   @default(0)
-  nombre_inscrit                  Int                   @default(0)
-  nombre_enveloppe_urnes          Int                   @default(0)
-  nombre_enveloppe_bulletins_differents Int             @default(0)
-  nombre_bulletin_electeur_identifiable Int             @default(0)
-  nombre_bulletin_enveloppes_signes Int                 @default(0)
-  nombre_enveloppe_non_elecam     Int                   @default(0)
-  nombre_bulletin_non_elecam      Int                   @default(0)
-  nombre_bulletin_sans_enveloppe  Int                   @default(0)
-  nombre_enveloppe_vide           Int                   @default(0)
-  nombre_suffrages_valable        Int                   @default(0)
-  nombre_votant                   Int                   @default(0)
-  bulletin_nul                    Int                   @default(0)
-  suffrage_exprime                Float?
-  taux_participation              Float?
-  date_creation                   String?
-  departement                     Departement           @relation(fields: [code_departement], references: [code])
+  code           Int      @id @default(autoincrement())
+  codeDepartement Int     @map("code_departement")
+  
+  // Champs principaux obligatoires
+  nombreBureauVote Int?   @default(0) @map("nombre_bureau_vote")
+  nombreInscrit  Int?     @default(0) @map("nombre_inscrit")
+  nombreVotant   Int?     @default(0) @map("nombre_votant")
+  nombreEnveloppeUrnes Int? @default(0) @map("nombre_enveloppe_urnes")
+  bulletinNul    Int?     @default(0) @map("bulletin_nul")
+  suffrageExprime Int?    @default(0) @map("suffrage_exprime")
+  
+  // Champs détaillés optionnels
+  enveloppesContBulletinsDifferents Int? @default(0) @map("enveloppes_bulletins_differents")
+  bulletinsAvecSignes Int? @default(0) @map("bulletins_avec_signes")
+  bulletinsDansEnveloppesAvecSignes Int? @default(0) @map("bulletins_enveloppes_signes")
+  enveloppesAutresQueElecam Int? @default(0) @map("enveloppes_autres_elecam")
+  bulletinsAutresQueElecam Int? @default(0) @map("bulletins_autres_elecam")
+  bulletinsSansEnveloppes Int? @default(0) @map("bulletins_sans_enveloppes")
+  enveloppesVides Int? @default(0) @map("enveloppes_vides")
+  
+  
+  // Métadonnées
+  dateCreation   String?  @map("date_creation")
+  dateModification String? @map("date_modification")
+  
+  departement    Departement @relation(fields: [codeDepartement], references: [code])
+  
+  @@unique([codeDepartement])
+  @@map("Participation_departement")
 }
 
 model Permission {
@@ -230,14 +246,20 @@ model Region {
 }
 
 model ResultatDepartement {
-  code              Int                   @id @default(autoincrement())
-  code_departement  Int
-  code_parti        Int
-  nombre_vote       Int                   @default(0)
-  pourcentage       Float?
-  date_creation     String?
-  departement       Departement           @relation(fields: [code_departement], references: [code])
-  parti             PartiPolitique        @relation(fields: [code_parti], references: [code])
+  code           Int      @id @default(autoincrement())
+  codeDepartement Int     @map("code_departement")
+  codeParti      Int      @map("code_parti")
+  codeCandidat   Int?     @map("code_candidat")
+  nombreVote     Int?     @default(0) @map("nombre_vote")
+  pourcentage    Decimal? @db.Decimal(19, 4)
+  dateCreation   String?  @map("date_creation")
+  
+  departement    Departement @relation(fields: [codeDepartement], references: [code])
+  parti          PartiPolitique @relation(fields: [codeParti], references: [code])
+  candidat       Candidat? @relation(fields: [codeCandidat], references: [code])
+  
+  @@unique([codeDepartement, codeParti])
+  @@map("Resultat_departement")
 }
 
 model Role {
@@ -326,3 +348,21 @@ model UtilisateurRegion {
   utilisateur       Utilisateur?          @relation(fields: [code_utilisateur], references: [code])
 }
 
+
+model ParticipationCommune {
+  code           Int      @id @default(autoincrement())
+  codeCommune    Int      @map("code_commune")
+  nombreBureaux  Int?     @map("nombre_bureaux")
+  nombreInscrits Int?     @map("nombre_inscrits")
+  nombreVotants  Int?     @map("nombre_votants")
+  tauxParticipation Decimal? @map("taux_participation") @db.Decimal(5, 2)
+  bulletinsNuls  Int?     @map("bulletins_nuls")
+  suffragesValables Int?  @map("suffrages_valables")
+  tauxAbstention Decimal? @map("taux_abstention") @db.Decimal(5, 2)
+  dateCreation   DateTime @default(now()) @map("date_creation")
+  dateModification DateTime @updatedAt @map("date_modification")
+  
+  commune        Arrondissement @relation(fields: [codeCommune], references: [code])
+  
+  @@map("participation_commune")
+}
