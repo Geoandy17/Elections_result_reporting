@@ -5141,7 +5141,7 @@ function AppContent() {
   
   const [activeMenu, setActiveMenu] = useState(getInitialMenu());
 
-  // Define full menu (admin sees everything)
+  // Define full menu (admin sees everything) - Compressed with submenus
   const fullMenuItems: MenuItem[] = [
     {
       id: 'dashboard',
@@ -5149,60 +5149,80 @@ function AppContent() {
       icon: 'fas fa-gauge'
     },
     {
-      id: 'polling-stations',
-      label: 'Validation des résultats',
-      icon: 'fas fa-check-double'
-    },
-    {
-      id: 'submission',
-      label: 'Saisie des resultats',
-      icon: 'fas fa-open-to-square',
-    },
-    {
-      id: 'validation-results-new',
-      label: 'Nouvelle Validation',
-      icon: 'fas fa-edit'
+      id: 'results',
+      label: 'Résultats',
+      icon: 'fas fa-chart-line',
+      children: [
+        {
+          id: 'polling-stations',
+          label: 'Validation des résultats',
+          icon: 'fas fa-check-double'
+        },
+        {
+          id: 'submission',
+          label: 'Saisie des résultats',
+          icon: 'fas fa-edit'
+        },
+        {
+          id: 'validation-results-new',
+          label: 'Nouvelle Validation',
+          icon: 'fas fa-clipboard-check'
+        }
+      ]
     },
     {
       id: 'synthesis',
-      label: 'Synthèse Régionale',
-      icon: 'fas fa-chart-column'
+      label: 'Synthèses',
+      icon: 'fas fa-chart-column',
+      children: [
+        {
+          id: 'synthesis',
+          label: 'Régionale',
+          icon: 'fas fa-map'
+        },
+        {
+          id: 'synthesis-departemental',
+          label: 'Départementale',
+          icon: 'fas fa-building'
+        },
+        {
+          id: 'synthesis-communal',
+          label: 'Communale',
+          icon: 'fas fa-city'
+        }
+      ]
     },
     {
-      id: 'synthesis-departemental',
-      label: 'Synthèse Départementale',
-      icon: 'fas fa-building'
-    },
-    {
-      id: 'synthesis-communal',
-      label: 'Synthèse Communale',
-      icon: 'fas fa-city'
+      id: 'management',
+      label: 'Gestion',
+      icon: 'fas fa-cogs',
+      children: [
+        {
+          id: 'commissions',
+          label: 'Commissions',
+          icon: 'fas fa-users-cog'
+        },
+        {
+          id: 'arrondissements',
+          label: 'Arrondissements',
+          icon: 'fas fa-map-marked-alt'
+        },
+        {
+          id: 'participations',
+          label: 'Participations',
+          icon: 'fas fa-chart-pie'
+        },
+        {
+          id: 'redressements',
+          label: 'Redressements',
+          icon: 'fas fa-undo'
+        }
+      ]
     },
     {
       id: 'reports',
-      label: 'Reports',
-      icon: 'fas fa-note',
-      
-    },
-    {
-      id: 'commissions',
-      label: 'Gestion des Commissions',
-      icon: 'fas fa-users-cog'
-    },
-    {
-      id: 'arrondissements',
-      label: 'Gestion des Arrondissements',
-      icon: 'fas fa-map-marked-alt'
-    },
-    {
-      id: 'participations',
-      label: 'Participations Départementales',
-      icon: 'fas fa-chart-pie'
-    },
-    {
-      id: 'redressements',
-      label: 'Gestion des Redressements',
-      icon: 'fas fa-edit'
+      label: 'Rapports',
+      icon: 'fas fa-file-alt'
     }
   ];
 
@@ -5229,41 +5249,107 @@ function AppContent() {
   const isSuperviseurCommunale = roleNames.includes('superviseur-communale');
     const isScrutateur = roleNames.includes('scrutateur'); // Add this line
 
-  // Filter menu by role (memoized)
+  // Filter menu by role (memoized) with submenu support
   const menuItems: MenuItem[] = useMemo(() => {
     if (isAdmin) {
-      // Administrateurs can see all items except departmental and communal synthesis
-      return fullMenuItems.filter(item => !['synthesis-departemental', 'synthesis-communal','reports'].includes(item.id));
+      // Administrateurs can see all items
+      return fullMenuItems;
     }
     if (isValidator) {
-      // Validateurs can see validation and regional synthesis only 
-      return fullMenuItems.filter(item => ['polling-stations', 'synthesis-communal'].includes(item.id));
+      // Validateurs can see results and synthesis
+      return fullMenuItems.filter(item => ['dashboard', 'results', 'synthesis'].includes(item.id))
+        .map(item => {
+          if (item.id === 'results') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['polling-stations', 'validation-results-new'].includes(child.id))
+            };
+          }
+          if (item.id === 'synthesis') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['synthesis-communal'].includes(child.id))
+            };
+          }
+          return item;
+        });
     }
     if (isObserver) {
-      // Observateurs can see dashboard, regional synthesis, and reports
+      // Observateurs can see dashboard, synthesis, and reports
       return fullMenuItems.filter(item => ['dashboard', 'synthesis', 'reports'].includes(item.id));
     }
     if (isLocalObserver) {
-      // Observateur-local can see only departmental and communal synthesis
-      return fullMenuItems.filter(item => ['synthesis-departemental', 'synthesis-communal'].includes(item.id));
+      // Observateur-local can see only departmental synthesis
+      return fullMenuItems.filter(item => ['dashboard', 'synthesis'].includes(item.id))
+        .map(item => {
+          if (item.id === 'synthesis') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['synthesis-departemental'].includes(child.id))
+            };
+          }
+          return item;
+        });
     }
-     if (isScrutateur) {
-    // Scrutateurs can see only the submission page
-    return fullMenuItems.filter(item => ['submission'].includes(item.id));
-  }
+    if (isScrutateur) {
+      // Scrutateurs can see only results submission
+      return fullMenuItems.filter(item => ['dashboard', 'results'].includes(item.id))
+        .map(item => {
+          if (item.id === 'results') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['submission'].includes(child.id))
+            };
+          }
+          return item;
+        });
+    }
     if (isSuperviseurRegionale) {
       // Superviseur-Regionale can see only regional synthesis
-      return fullMenuItems.filter(item => ['synthesis'].includes(item.id));
+      return fullMenuItems.filter(item => ['dashboard', 'synthesis'].includes(item.id))
+        .map(item => {
+          if (item.id === 'synthesis') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['synthesis'].includes(child.id))
+            };
+          }
+          return item;
+        });
     }
     if (isSuperviseurDepartementale) {
-      // Superviseur-Departementale can see only departmental synthesis
-      return fullMenuItems.filter(item => ['synthesis-departemental'].includes(item.id));
+      // Superviseur-Departementale can see synthesis and management
+      return fullMenuItems.filter(item => ['dashboard', 'synthesis', 'management'].includes(item.id))
+        .map(item => {
+          if (item.id === 'synthesis') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['synthesis-departemental'].includes(child.id))
+            };
+          }
+          if (item.id === 'management') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['commissions', 'participations', 'redressements'].includes(child.id))
+            };
+          }
+          return item;
+        });
     }
     if (isSuperviseurCommunale) {
       // Superviseur-Communale can see only communal synthesis
-      return fullMenuItems.filter(item => ['synthesis-communal'].includes(item.id));
+      return fullMenuItems.filter(item => ['dashboard', 'synthesis'].includes(item.id))
+        .map(item => {
+          if (item.id === 'synthesis') {
+            return {
+              ...item,
+              children: item.children?.filter(child => ['synthesis-communal'].includes(child.id))
+            };
+          }
+          return item;
+        });
     }
-    // Default case (fallback) - only regional synthesis and dashboard
+    // Default case (fallback) - only dashboard and synthesis
     return fullMenuItems.filter(item => ['dashboard', 'synthesis'].includes(item.id));
   }, [isAdmin, isValidator, isObserver, isLocalObserver, isScrutateur, isSuperviseurRegionale, isSuperviseurDepartementale, isSuperviseurCommunale]);
 

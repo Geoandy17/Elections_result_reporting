@@ -13,12 +13,16 @@ import {
   type Departement
 } from '../api/arrondissementApi';
 import { departementsApi } from '../api/commissionApi';
+import { usePermissions } from '../hooks/usePermissions';
+import { EntityType, ActionType } from '../types/roles';
+import { RoleBasedView, RoleBasedButton, AccessDeniedMessage } from './RoleBasedView';
 
 interface ArrondissementManagementProps {
   className?: string;
 }
 
 export const ArrondissementManagement: React.FC<ArrondissementManagementProps> = ({ className = '' }) => {
+  const { canAccess, canModify, canCreate, canDelete } = usePermissions();
   const [activeTab, setActiveTab] = useState<'arrondissements' | 'documents'>('arrondissements');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -161,6 +165,17 @@ export const ArrondissementManagement: React.FC<ArrondissementManagementProps> =
     ? arrondissements.filter(arr => arr.code_departement === Number(selectedDepartement))
     : arrondissements;
 
+  // Vérifier les permissions d'accès
+  if (!canAccess(EntityType.ARRONDISSEMENT) && !canAccess(EntityType.DOCUMENT_ARRONDISSEMENT)) {
+    return (
+      <AccessDeniedMessage 
+        entity={EntityType.ARRONDISSEMENT} 
+        action={ActionType.READ}
+        className={className}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className={`flex items-center justify-center p-8 ${className}`}>
@@ -198,20 +213,36 @@ export const ArrondissementManagement: React.FC<ArrondissementManagementProps> =
       <div className="border-b border-gray-200">
         <nav className="flex px-6">
           {[
-            { key: 'arrondissements', label: 'Arrondissements', count: arrondissements.length },
-            { key: 'documents', label: 'Documents', count: documents.length }
-          ].map(({ key, label, count }) => (
-            <button
+            { 
+              key: 'arrondissements', 
+              label: 'Arrondissements', 
+              count: arrondissements.length,
+              entity: EntityType.ARRONDISSEMENT
+            },
+            { 
+              key: 'documents', 
+              label: 'Documents', 
+              count: documents.length,
+              entity: EntityType.DOCUMENT_ARRONDISSEMENT
+            }
+          ].map(({ key, label, count, entity }) => (
+            <RoleBasedView
               key={key}
-              onClick={() => handleTabChange(key as any)}
-              className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                activeTab === key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              entity={entity}
+              action={ActionType.READ}
+              fallback={null}
             >
-              {label} ({count})
-            </button>
+              <button
+                onClick={() => handleTabChange(key as any)}
+                className={`py-4 px-6 text-sm font-medium border-b-2 ${
+                  activeTab === key
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            </RoleBasedView>
           ))}
         </nav>
       </div>
@@ -386,12 +417,14 @@ const ArrondissementsTab: React.FC<ArrondissementsTabProps> = ({
           ))}
         </select>
       </div>
-      <button
+      <RoleBasedButton
+        entity={EntityType.ARRONDISSEMENT}
+        action={ActionType.CREATE}
         onClick={onAdd}
         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
       >
         Ajouter un arrondissement
-      </button>
+      </RoleBasedButton>
     </div>
 
     {/* Arrondissements list */}
@@ -473,18 +506,22 @@ const ArrondissementsTab: React.FC<ArrondissementsTabProps> = ({
                 )}
               </div>
               <div className="flex space-x-2 ml-4">
-                <button
+                <RoleBasedButton
+                  entity={EntityType.ARRONDISSEMENT}
+                  action={ActionType.UPDATE}
                   onClick={() => onEdit(arrondissement)}
                   className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-300 hover:border-blue-500"
                 >
                   Modifier
-                </button>
-                <button
+                </RoleBasedButton>
+                <RoleBasedButton
+                  entity={EntityType.ARRONDISSEMENT}
+                  action={ActionType.DELETE}
                   onClick={() => onDelete(arrondissement.code)}
                   className="text-red-600 hover:text-red-800 px-3 py-1 rounded border border-red-300 hover:border-red-500"
                 >
                   Supprimer
-                </button>
+                </RoleBasedButton>
               </div>
             </div>
           </div>
@@ -572,12 +609,14 @@ const DocumentsTab: React.FC<DocumentsTabProps> = ({
           ))}
         </select>
       </div>
-      <button
+      <RoleBasedButton
+        entity={EntityType.DOCUMENT_ARRONDISSEMENT}
+        action={ActionType.CREATE}
         onClick={onAdd}
         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
       >
         Ajouter un document
-      </button>
+      </RoleBasedButton>
     </div>
 
     {/* Documents list */}
@@ -620,25 +659,31 @@ const DocumentsTab: React.FC<DocumentsTabProps> = ({
               </div>
               <div className="flex space-x-2 ml-4">
                 {document.url_pv && (
-                  <button
+                  <RoleBasedButton
+                    entity={EntityType.DOCUMENT_ARRONDISSEMENT}
+                    action={ActionType.READ}
                     onClick={() => onDownload(document)}
                     className="text-green-600 hover:text-green-800 px-3 py-1 rounded border border-green-300 hover:border-green-500"
                   >
                     📥 Télécharger
-                  </button>
+                  </RoleBasedButton>
                 )}
-                <button
+                <RoleBasedButton
+                  entity={EntityType.DOCUMENT_ARRONDISSEMENT}
+                  action={ActionType.UPDATE}
                   onClick={() => onEdit(document)}
                   className="text-blue-600 hover:text-blue-800 px-3 py-1 rounded border border-blue-300 hover:border-blue-500"
                 >
                   Modifier
-                </button>
-                <button
+                </RoleBasedButton>
+                <RoleBasedButton
+                  entity={EntityType.DOCUMENT_ARRONDISSEMENT}
+                  action={ActionType.DELETE}
                   onClick={() => onDelete(document.code)}
                   className="text-red-600 hover:text-red-800 px-3 py-1 rounded border border-red-300 hover:border-red-500"
                 >
                   Supprimer
-                </button>
+                </RoleBasedButton>
               </div>
             </div>
           </div>

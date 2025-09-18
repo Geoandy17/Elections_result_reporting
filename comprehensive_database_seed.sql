@@ -1,4 +1,3 @@
-
 -- =====================================================
 -- COMPREHENSIVE DATABASE SEEDING SCRIPT
 -- Election Result Reporting System
@@ -787,5 +786,3 @@ INSERT INTO journal (code, code_utilisateur, action, description, timestamp, cod
 (30, '15', 'APPROVE', 'Approbation finale des résultats pour Fako', NOW(), '15', '15', NOW(), NOW());
 
 SET FOREIGN_KEY_CHECKS = 1;
-
-COMMIT;
