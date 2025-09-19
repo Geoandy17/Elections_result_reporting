@@ -16,12 +16,13 @@ export async function OPTIONS() {
 // GET /api/resultats-departement/[id] - Get a specific result
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id } = await params
+    const idNum = parseInt(id)
 
-    if (isNaN(id)) {
+    if (isNaN(idNum)) {
       const response = NextResponse.json(
         { error: 'Invalid ID' },
         { status: 400 }
@@ -31,7 +32,7 @@ export async function GET(
     }
 
     const resultat = await prisma.resultatDepartement.findUnique({
-      where: { code: id },
+      where: { code: idNum },
       include: {
         departement: {
           select: {
@@ -87,10 +88,11 @@ export async function GET(
 // PUT /api/resultats-departement/[id] - Update a result
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id } = await params
+    const idNum = parseInt(id)
     const body = await request.json()
     const {
       code_departement,
@@ -99,7 +101,7 @@ export async function PUT(
       pourcentage
     } = body
 
-    if (isNaN(id)) {
+    if (isNaN(idNum)) {
       const response = NextResponse.json(
         { error: 'Invalid ID' },
         { status: 400 }
@@ -110,7 +112,7 @@ export async function PUT(
 
     // Vérifier si le résultat existe
     const existingResult = await prisma.resultatDepartement.findUnique({
-      where: { code: id }
+      where: { code: idNum }
     })
 
     if (!existingResult) {
@@ -131,7 +133,7 @@ export async function PUT(
         where: {
           code_departement: newDepartement,
           code_parti: newParti,
-          code: { not: id }
+          code: { not: idNum }
         }
       })
 
@@ -152,7 +154,7 @@ export async function PUT(
     if (pourcentage !== undefined) updateData.pourcentage = pourcentage ? parseFloat(pourcentage) : null
 
     const resultat = await prisma.resultatDepartement.update({
-      where: { code: id },
+      where: { code: idNum },
       data: updateData,
       include: {
         departement: {
@@ -199,12 +201,13 @@ export async function PUT(
 // DELETE /api/resultats-departement/[id] - Delete a result
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id } = await params
+    const idNum = parseInt(id)
 
-    if (isNaN(id)) {
+    if (isNaN(idNum)) {
       const response = NextResponse.json(
         { error: 'Invalid ID' },
         { status: 400 }
@@ -215,7 +218,7 @@ export async function DELETE(
 
     // Vérifier si le résultat existe
     const existingResult = await prisma.resultatDepartement.findUnique({
-      where: { code: id }
+      where: { code: idNum }
     })
 
     if (!existingResult) {
@@ -228,7 +231,7 @@ export async function DELETE(
     }
 
     await prisma.resultatDepartement.delete({
-      where: { code: id }
+      where: { code: idNum }
     })
 
     const response = NextResponse.json(

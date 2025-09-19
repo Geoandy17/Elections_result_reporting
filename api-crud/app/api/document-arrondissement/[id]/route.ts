@@ -130,7 +130,7 @@ export async function PUT(
       return response
     }
 
-    let updateData: any = {
+    const updateData: Record<string, unknown> = {
       libelle,
       timestamp: new Date()
     }

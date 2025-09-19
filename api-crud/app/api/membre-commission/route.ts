@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const commissionCode = searchParams.get('commission')
     const fonctionCode = searchParams.get('fonction')
     
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     
     if (commissionCode) {
       where.code_commission = parseInt(commissionCode)

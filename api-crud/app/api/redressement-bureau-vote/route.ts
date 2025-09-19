@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const arrondissementCode = searchParams.get('arrondissement')
     const departementCode = searchParams.get('departement')
     
-    let where: any = {}
+    const where: Record<string, unknown> = {}
     
     if (bureauVoteCode) {
       where.code_bureau_vote = parseInt(bureauVoteCode)

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const departementCode = searchParams.get('departement')
     const regionCode = searchParams.get('region')
     
-    let where: any = {}
+    const where: Record<string, unknown> = {}
     
     if (departementCode) {
       where.code_departement = parseInt(departementCode)

@@ -17,10 +17,11 @@ export async function OPTIONS() {
 // GET /api/pv-departement/[id] - Get a specific PV
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idParam } = await params
+    const id = parseInt(idParam)
 
     if (isNaN(id)) {
       const response = NextResponse.json(
@@ -78,10 +79,11 @@ export async function GET(
 // PUT /api/pv-departement/[id] - Update a PV
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idParam } = await params
+    const id = parseInt(idParam)
 
     if (isNaN(id)) {
       const response = NextResponse.json(
@@ -179,10 +181,11 @@ export async function PUT(
 // DELETE /api/pv-departement/[id] - Delete a PV
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idParam } = await params
+    const id = parseInt(idParam)
 
     if (isNaN(id)) {
       const response = NextResponse.json(
